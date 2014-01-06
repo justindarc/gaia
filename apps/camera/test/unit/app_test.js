@@ -11,10 +11,10 @@ suite('app', function() {
       'vendor/view',
       'geolocation',
       'activity'
-    ], function(App, View, GeoLocation, Activity) {
+    ], function(App, View, Geolocation, Activity) {
       modules.app = App;
       modules.view = View;
-      modules.geolocation = GeoLocation;
+      modules.geolocation = Geolocation;
       modules.activity = Activity;
       done();
     });
@@ -38,14 +38,14 @@ suite('app', function() {
   setup(function() {
     var View = this.modules.view;
     var Activity = this.modules.activity;
-    var GeoLocation = this.modules.geolocation;
+    var Geolocation = this.modules.geolocation;
     var App = this.modules.app;
 
     var options = this.options = {
       doc: mocks.doc(),
       win: mocks.win(),
       el: document.createElement('div'),
-      geolocation: new GeoLocation(),
+      geolocation: new Geolocation(),
       activity: new Activity(),
       camera: {},
       sounds: {},

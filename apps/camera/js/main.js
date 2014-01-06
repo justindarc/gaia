@@ -19,7 +19,6 @@ require(['config/require', 'config'], function() {
     var ControlsView = require('views/controls');
     var ViewfinderView = require('views/viewfinder');
     var sounds = new Sounds(require('config/sounds'));
-    var GeoLocation = require('geolocation');
     var Activity = require('activity');
     var controllers = {
       hud: require('controllers/hud'),
@@ -49,7 +48,7 @@ require(['config/require', 'config'], function() {
       win: window,
       doc: document,
       el: document.body,
-      geolocation: new GeoLocation(),
+      // geolocation: new Geolocation(),
       activity: new Activity(),
       camera: new Camera(),
       sounds: sounds,

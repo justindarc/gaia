@@ -5,14 +5,14 @@ define(function(require, exports, module) {
  * Locals
  */
 
-var proto = GeoLocation.prototype;
+var proto = Geolocation.prototype;
 var geolocation = navigator.geolocation;
 
 /**
  * Exports
  */
 
-module.exports = GeoLocation;
+module.exports = Geolocation;
 
 /**
  * Interface to the
@@ -20,7 +20,7 @@ module.exports = GeoLocation;
  *
  * @constructor
  */
-function GeoLocation() {
+function Geolocation() {
   this.watcher = null;
   this.position = null;
   this.setPosition = this.setPosition.bind(this);

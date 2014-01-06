@@ -2,7 +2,7 @@
 'use strict';
 
 suite('geolocation', function() {
-  var GeoLocation;
+  var Geolocation;
 
   // Sometimes setup via the
   // test agent can take a while,
@@ -12,13 +12,13 @@ suite('geolocation', function() {
 
   suiteSetup(function(done) {
     req(['geolocation'], function(geolocation) {
-      GeoLocation = geolocation;
+      Geolocation = geolocation;
       done();
     });
   });
 
   setup(function() {
-    this.geolocation = new GeoLocation();
+    this.geolocation = new Geolocation();
     sinon.stub(navigator.geolocation, 'watchPosition');
     sinon.stub(navigator.geolocation, 'clearWatch');
   });
@@ -28,7 +28,7 @@ suite('geolocation', function() {
     navigator.geolocation.clearWatch.restore();
   });
 
-  suite('GeoLocation#watch()', function() {
+  suite('Geolocation#watch()', function() {
     test('Should begin watching geolocation position if' +
          'no watcher currently in place', function() {
       this.geolocation.watch();
@@ -43,7 +43,7 @@ suite('geolocation', function() {
     });
   });
 
-  suite('GeoLocation#stopWatching()', function() {
+  suite('Geolocation#stopWatching()', function() {
     test('Should call navigator.geolocation.clearWatch passing' +
          'a reference to the watcher', function() {
       this.geolocation.watcher = 1;
@@ -58,7 +58,7 @@ suite('geolocation', function() {
     });
   });
 
-  suite('GeoLocation#setPosition()', function() {
+  suite('Geolocation#setPosition()', function() {
     test('Should store passed geolocation object on instance', function() {
       this.geolocation.setPosition({
         timestamp: 1234,

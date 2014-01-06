@@ -69,9 +69,19 @@ proto.boot = function() {
   this.injectContent();
   this.bindEvents();
   this.miscStuff();
-  this.geolocationWatch();
   this.emit('boot');
   debug('booted');
+
+  // Load additional modules not initialized at launch
+  var self = this;
+  window.setTimeout(function() {
+    if (!self.geolocation) {
+      var Geolocation = require('geolocation');
+      self.geolocation = new Geolocation();
+    }
+
+    self.geolocationWatch();
+  }, 1);
 };
 
 proto.teardown = function() {
