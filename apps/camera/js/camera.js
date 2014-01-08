@@ -12,7 +12,6 @@ var orientation = require('orientation');
 var broadcast = require('broadcast');
 var Model = require('vendor/model');
 var evt = require('vendor/evt');
-var dcf = require('dcf');
 
 /**
  * Locals
@@ -38,6 +37,22 @@ var lazyCreateVideoPosterImage = function(blob, filename, done) {
   }
 
   createVideoPosterImage(blob, filename, done);
+};
+
+var dcf = null
+var lazyCreateDCFFilename = function(storage, type, callback) {
+  if (!dcf) {
+    return require(['dcf'], function(r) {
+      dcf = r;
+
+      LazyL10n.get(function() {
+        dcf.init();
+        dcf.createDCFFilename(storage, type, callback);
+      });
+    });
+  }
+
+  dcf.createDCFFilename(storage, type, callback);
 };
 
 /**
@@ -328,7 +343,7 @@ proto.startRecording = function() {
 
   this._sizeLimitAlertActive = false;
 
-  dcf.createDCFFilename(
+  lazyCreateDCFFilename(
     this._videoStorage,
     'video',
     onFileNameCreated);
@@ -717,7 +732,7 @@ proto.takePictureSuccess = function(blob) {
 proto._addPictureToStorage = function(blob, callback) {
   var self = this;
 
-  dcf.createDCFFilename(
+  lazyCreateDCFFilename(
     this._pictureStorage,
     'image',
     onFilenameCreated);

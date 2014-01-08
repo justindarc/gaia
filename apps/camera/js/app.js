@@ -15,7 +15,6 @@ var debug = require('debug')('app');
 var LazyL10n = require('LazyL10n');
 var bind = require('utils/bind');
 var evt = require('vendor/evt');
-var dcf = require('dcf');
 
 /**
  * Locals
@@ -244,14 +243,6 @@ proto.miscStuff = function() {
   // Prevent the phone
   // from going to sleep.
   lockscreen.disableTimeout();
-
-  // This must be tidied, but the
-  // important thing is it's out
-  // of camera.js
-  LazyL10n.get(function() {
-    dcf.init();
-    performanceTesting.dispatch('startup-path-done');
-  });
 
   // The screen wakelock should be on
   // at all times except when the
