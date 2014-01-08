@@ -7,7 +7,6 @@ define(function(require, exports, module) {
  * Dependencies
  */
 
-var createVideoPosterImage = require('lib/create-video-poster-image');
 var constants = require('config/camera');
 var orientation = require('orientation');
 var broadcast = require('broadcast');
@@ -27,6 +26,19 @@ var RECORD_SPACE_PADDING = constants.RECORD_SPACE_PADDING;
 var ESTIMATED_JPEG_FILE_SIZE = constants.ESTIMATED_JPEG_FILE_SIZE;
 var MIN_RECORDING_TIME = constants.MIN_RECORDING_TIME;
 var proto = evt.mix(Camera.prototype);
+
+var createVideoPosterImage = null;
+
+var lazyCreateVideoPosterImage = function(blob, filename, done) {
+  if (!createVideoPosterImage) {
+    return require(['lib/create-video-poster-image'], function(r) {
+      createVideoPosterImage = r;
+      createVideoPosterImage(blob, filename, done);
+    });
+  }
+
+  createVideoPosterImage(blob, filename, done);
+};
 
 /**
  * Exports
@@ -486,7 +498,7 @@ proto.stopRecording = function() {
     function onSuccess() {
       var blob = req.result;
 
-      createVideoPosterImage(blob, filename, function(err, data) {
+      lazyCreateVideoPosterImage(blob, filename, function(err, data) {
         if (err) {
           // We need to delete all corrupted
           // video files, those of them may be
