@@ -30,6 +30,7 @@ function CameraController(app) {
   this.activity = app.activity;
   this.filmstrip = app.filmstrip;
   this.viewfinder = app.views.viewfinder;
+  this.previewGallery = app.views.previewGallery;
   this.controls = app.views.controls;
   this.configure();
   this.bindEvents();
@@ -120,6 +121,7 @@ CameraController.prototype.onCapture = function() {
 
 CameraController.prototype.onNewImage = function(image) {
   var filmstrip = this.filmstrip;
+  var previewGallery = this.previewGallery;
   var storage = this.storage;
   var blob = image.blob;
   var self = this;
@@ -130,6 +132,7 @@ CameraController.prototype.onNewImage = function(image) {
     debug('stored image', filepath);
     if (!self.activity.active) {
       filmstrip.addImageAndShow(filepath, blob);
+      previewGallery.addImage(filepath, blob);
     }
   });
 
@@ -151,6 +154,8 @@ CameraController.prototype.onNewVideo = function(video) {
   if (!this.activity.active) {
     this.filmstrip.addVideoAndShow(video);
   }
+
+  var self = this;
   storage.addVideo(tmpBlob, function(blob, filepath) {
     debug('stored video', filepath);
     video.filepath = filepath;
@@ -159,6 +164,11 @@ CameraController.prototype.onNewVideo = function(video) {
     // Add the poster image to the image storage
     poster.filepath = video.filepath.replace('.3gp', '.jpg');
     storage.addImage(poster.blob, { filepath: poster.filepath });
+
+    if (!self.activity.active) {
+      self.previewGallery.addVideo(filepath, blob,
+                                   poster.filepath, poster.blob);
+    }
 
     // Now we have stored the blob
     // we can delete the temporary one.

@@ -26,6 +26,7 @@ require(['config/require', 'config'], function() {
       hud: require('controllers/hud'),
       controls: require('controllers/controls'),
       viewfinder: require('controllers/viewfinder'),
+      previewGallery: require('controllers/preview-gallery'),
       overlay: require('controllers/overlay'),
       confirm: require('controllers/confirm'),
       settings: require('controllers/settings'),
