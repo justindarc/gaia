@@ -56,156 +56,154 @@ Preview.drawPlayButton = function(ctx) {
   ctx.fill();
 };
 
-Preview.prototype = {
-  constructor: Preview,
+Preview.prototype.constructor = Preview;
 
-  type: null,
+Preview.prototype.type = null;
 
-  path: null,
-  blob: null,
+Preview.prototype.path = null;
+Preview.prototype.blob = null;
 
-  posterPath: null,
-  posterBlob: null,
+Preview.prototype.posterPath = null;
+Preview.prototype.posterBlob = null;
 
-  previewBlob: null,
-  thumbnailBlob: null,
+Preview.prototype.previewBlob = null;
+Preview.prototype.thumbnailBlob = null;
 
-  originalMetadata: null,
-  previewMetadata: null,
+Preview.prototype.originalMetadata = null;
+Preview.prototype.previewMetadata = null;
 
-  width: 0,
-  height: 0,
-  rotation: 0,
-  mirrored: false,
+Preview.prototype.width = 0;
+Preview.prototype.height = 0;
+Preview.prototype.rotation = 0;
+Preview.prototype.mirrored = false;
 
-  _promise: null,
+Preview.prototype._promise = null;
 
-  process: function(forceReprocess) {
-    if (this._promise && !forceReprocess) {
-      return this._promise;
+Preview.prototype.process = function(forceReprocess) {
+  if (this._promise && !forceReprocess) {
+    return this._promise;
+  }
+
+  var processor = this['_process_' + this.type];
+  var self = this;
+  this._promise = new Promise(function(resolve, reject) {
+    if (typeof processor === 'function') {
+      processor.call(self, resolve, reject);
     }
 
-    var processor = this['_process_' + this.type];
-    var self = this;
-    this._promise = new Promise(function(resolve, reject) {
-      if (typeof processor === 'function') {
-        processor.call(self, resolve, reject);
+    else {
+      reject('`Preview`: Invalid PREVIEW_TYPE');
+    }
+  });
+
+  return this._promise;
+};
+
+Preview.prototype.createThumbnail = function(sourceBlob, callback) {
+  var self = this;
+  var image = new Image();
+  image.onload = function() {
+    var canvas = document.createElement('canvas');
+    canvas.width  = Preview.THUMBNAIL_WIDTH;
+    canvas.height = Preview.THUMBNAIL_HEIGHT;
+
+    var scale = Math.max(Preview.THUMBNAIL_WIDTH  / image.width,
+                         Preview.THUMBNAIL_HEIGHT / image.height),
+        centerX = Preview.THUMBNAIL_WIDTH  / 2,
+        centerY = Preview.THUMBNAIL_HEIGHT / 2,
+        w = Preview.THUMBNAIL_WIDTH  / scale,
+        h = Preview.THUMBNAIL_HEIGHT / scale,
+        x = (image.width  - w) / 2,
+        y = (image.height - h) / 2;
+
+    var ctx = canvas.getContext('2d');
+    if (self.rotation || self.mirrored) {
+      ctx.save();
+      ctx.translate(centerX, centerY);
+
+      if (self.mirrored) {
+        ctx.scale(1, -1);
       }
 
-      else {
-        reject('`Preview`: Invalid PREVIEW_TYPE');
-      }
-    });
-
-    return this._promise;
-  },
-
-  createThumbnail: function(sourceBlob, callback) {
-    var self = this;
-    var image = new Image();
-    image.onload = function() {
-      var canvas = document.createElement('canvas');
-      canvas.width  = Preview.THUMBNAIL_WIDTH;
-      canvas.height = Preview.THUMBNAIL_HEIGHT;
-
-      var scale = Math.max(Preview.THUMBNAIL_WIDTH  / image.width,
-                           Preview.THUMBNAIL_HEIGHT / image.height),
-          centerX = Preview.THUMBNAIL_WIDTH  / 2,
-          centerY = Preview.THUMBNAIL_HEIGHT / 2,
-          w = Preview.THUMBNAIL_WIDTH  / scale,
-          h = Preview.THUMBNAIL_HEIGHT / scale,
-          x = (image.width  - w) / 2,
-          y = (image.height - h) / 2;
-
-      var ctx = canvas.getContext('2d');
-      if (self.rotation || self.mirrored) {
-        ctx.save();
-        ctx.translate(centerX, centerY);
-
-        if (self.mirrored) {
-          ctx.scale(1, -1);
-        }
-
-        switch (self.rotation) {
-          case 90:
-            ctx.rotate(Math.PI / 2);
-            break;
-          case 180:
-            ctx.rotate(Math.PI);
-            break;
-          case 270:
-            ctx.rotate(-Math.PI / 2);
-            break;
-        }
-
-        ctx.translate(-centerX, -centerY);
+      switch (self.rotation) {
+        case 90:
+          ctx.rotate(Math.PI / 2);
+          break;
+        case 180:
+          ctx.rotate(Math.PI);
+          break;
+        case 270:
+          ctx.rotate(-Math.PI / 2);
+          break;
       }
 
-      ctx.drawImage(image, x, y, w, h, 0, 0,
-                    Preview.THUMBNAIL_WIDTH, Preview.THUMBNAIL_HEIGHT);
+      ctx.translate(-centerX, -centerY);
+    }
 
-      if (self.rotation || self.mirrored) {
-        ctx.restore();
-      }
+    ctx.drawImage(image, x, y, w, h, 0, 0,
+                  Preview.THUMBNAIL_WIDTH, Preview.THUMBNAIL_HEIGHT);
 
-      if (self.type === Preview.PREVIEW_TYPE.VIDEO) {
-        Preview.drawPlayButton(ctx);
-      }
+    if (self.rotation || self.mirrored) {
+      ctx.restore();
+    }
 
-      window.URL.revokeObjectURL(image.src);
-      canvas.toBlob(callback, 'image/jpeg');
+    if (self.type === Preview.PREVIEW_TYPE.VIDEO) {
+      Preview.drawPlayButton(ctx);
+    }
 
-      image.src = image.onload = null;
-    };
+    window.URL.revokeObjectURL(image.src);
+    canvas.toBlob(callback, 'image/jpeg');
 
-    image.src = window.URL.createObjectURL(sourceBlob);
-  },
+    image.src = image.onload = null;
+  };
 
-  _process_image: function(resolve, reject) {
-    var self = this;
-    parseJPEGMetadata(this.blob, function(metadata) {
-      var preview = metadata.preview;
-      if (!preview) {
-        reject('`Preview`: No preview data');
-        return;
-      }
+  image.src = window.URL.createObjectURL(sourceBlob);
+};
 
-      self.originalMetadata = metadata;
+Preview.prototype._process_image = function(resolve, reject) {
+  var self = this;
+  parseJPEGMetadata(this.blob, function(metadata) {
+    var preview = metadata.preview;
+    if (!preview) {
+      reject('`Preview`: No preview data');
+      return;
+    }
 
-      self.width  = metadata.width;
-      self.height = metadata.height;
-      self.rotation = metadata.rotation = metadata.rotation || 0;
-      self.mirrored = metadata.mirrored = metadata.mirrored || false;
+    self.originalMetadata = metadata;
 
-      var previewBlob = self.previewBlob =
-        self.blob.slice(preview.start, preview.end, 'image/jpeg');
+    self.width  = metadata.width;
+    self.height = metadata.height;
+    self.rotation = metadata.rotation = metadata.rotation || 0;
+    self.mirrored = metadata.mirrored = metadata.mirrored || false;
 
-      parseJPEGMetadata(previewBlob, function(previewMetadata) {
-        self.previewMetadata = previewMetadata;
+    var previewBlob = self.previewBlob =
+      self.blob.slice(preview.start, preview.end, 'image/jpeg');
 
-        // TODO: Is this needed?
-        preview.width  = previewMetadata.width;
-        preview.height = previewMetadata.height;
+    parseJPEGMetadata(previewBlob, function(previewMetadata) {
+      self.previewMetadata = previewMetadata;
 
-        self.createThumbnail(previewBlob, function(thumbnailBlob) {
-          self.thumbnailBlob = thumbnailBlob;
+      // TODO: Is this needed?
+      preview.width  = previewMetadata.width;
+      preview.height = previewMetadata.height;
 
-          resolve(self);
-        });
+      self.createThumbnail(previewBlob, function(thumbnailBlob) {
+        self.thumbnailBlob = thumbnailBlob;
+
+        resolve(self);
       });
-    }, function(error) {
-      reject('`Preview`: ' + error);
     });
-  },
+  }, function(error) {
+    reject('`Preview`: ' + error);
+  });
+};
 
-  _process_video: function(resolve, reject) {
-    var self = this;
-    this.createThumbnail(this.posterBlob, function(thumbnailBlob) {
-      self.thumbnailBlob = thumbnailBlob;
+Preview.prototype._process_video = function(resolve, reject) {
+  var self = this;
+  this.createThumbnail(this.posterBlob, function(thumbnailBlob) {
+    self.thumbnailBlob = thumbnailBlob;
 
-      resolve(self);
-    });
-  }
+    resolve(self);
+  });
 };
 
 return Preview;
