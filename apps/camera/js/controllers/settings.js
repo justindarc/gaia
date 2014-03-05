@@ -126,15 +126,17 @@ SettingsController.prototype.onCapabilitiesChange = function(capabilities) {
 var formatters = {
   pictureSizes: function(options) {
     var normalized = [];
-    var maxBytes = this.get('maxBytes');
+    var maxPixelSize = this.get('maxPixelSize');
 
     options.forEach(function(option) {
       var w = option.width;
       var h = option.height;
-      var bytes = w * h;
+      var pixelSize = w * h;
 
-      // Don't allow pictureSizes above the maxBytes limit
-      if (maxBytes && bytes > maxBytes) { return; }
+      // Don't allow pictureSizes above the maxPixelSize limit
+      if (maxPixelSize && pixelSize > maxPixelSize) {
+        return;
+      }
 
       option.aspect = getAspect(w, h);
       option.mp = getMP(w, h);

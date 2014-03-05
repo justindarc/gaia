@@ -50,6 +50,17 @@ Setting.prototype.onOptionsChange = function() {
   debug('options changed');
 };
 
+/**
+ * Convert this Setting's `options` array as defined
+ * in config/app.js into an object as key/value pairs.
+ * This allows us to look up an option by its `key`.
+ *
+ * e.g.: [ { key: 'a', title: 'A' }, ... ] ->
+ *       { a: { key: 'a', title: 'A' }, ... }
+ *
+ * @param  {Array} options
+ * @return {Object}
+ */
 Setting.prototype.optionsToHash = function(options) {
   var hash = {};
 

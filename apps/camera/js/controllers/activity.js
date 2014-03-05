@@ -51,7 +51,7 @@ ActivityController.prototype.configurePictureSize = function(options) {
   var data = this.activity.data;
 
   if (maxFileSize) {
-    options = filterBytesLessThan(maxFileSize, options);
+    options = filterPixelSizesLessThan(maxFileSize, options);
     setting.set('options', options);
   } else if (data.width || data.height) {
     options = [pickBySize(options, data)];
@@ -74,11 +74,11 @@ ActivityController.prototype.configureVideoSize = function(options) {
  * Utils
  */
 
-function filterBytesLessThan(bytes, sizes) {
-  return sizes.filter(function(option) {
+function filterPixelSizesLessThan(maxPixelSize, options) {
+  return options.filter(function(option) {
     var size = option.value;
-    var mp = size.width * size.height;
-    return mp <= bytes;
+    var pixelSize = size.width * size.height;
+    return pixelSize <= maxPixelSize;
   });
 }
 
