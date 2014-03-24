@@ -225,7 +225,7 @@ Storage.prototype.deleteImage = function(filepath) {
 
 Storage.prototype.deleteVideo = function(filepath) {
   var videoStorage = this.video;
-  var pictureStorage = this.storage.image;
+  var pictureStorage = this.image;
   var poster = filepath.replace('.3gp', '.jpg');
 
   videoStorage.delete(filepath).onerror = function(e) {
