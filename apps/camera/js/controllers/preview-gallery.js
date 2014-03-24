@@ -8,6 +8,17 @@ define(function(require, exports, module) {
 var debug = require('debug')('controller:preview-gallery');
 var bindAll = require('lib/bind-all');
 var PreviewGalleryView = require('views/preview-gallery');
+var parseJPEGMetadata = require('jpegMetaDataParser');
+var createThumbnailImage = require('lib/create-thumbnail-image');
+
+/**
+ * The size of the thumbnail images we generate.
+ *
+ * XXX: these constants are linked to style/controls.css, and should
+ * probably be defined somewhere else in the app.
+ */
+var THUMBNAIL_WIDTH = 54 * window.devicePixelRatio;
+var THUMBNAIL_HEIGHT = 54 * window.devicePixelRatio;
 
 /**
  * Exports
@@ -42,10 +53,16 @@ PreviewGalleryController.prototype.bindEvents = function() {
 
 PreviewGalleryController.prototype.configure = function() {
   this.currentItemIndex = 0;
-  this.items = [];
+  this.items = [];            // All the pictures and videos we know about
+  this.thumbnailItem = null;  // The item that currently has a thumbnail
 };
 
 PreviewGalleryController.prototype.openPreview = function() {
+  // If we're handling a pick activity the preview gallery is not used
+  if (this.app.activity.active) {
+    return;
+  }
+
   if (this.view) { return; }
   this.view = new PreviewGalleryView()
     .render()
@@ -61,6 +78,13 @@ PreviewGalleryController.prototype.openPreview = function() {
 };
 
 PreviewGalleryController.prototype.closePreview = function() {
+  // If the item that we have displayed a thumbnail for is no longer the
+  // first item in the array of items, then update the thumbnail. This can
+  // happen if the user deletes items after previewing them.
+  if (this.thumbnailItem !== this.items[0]) {
+    this.updateThumbnail();
+  }
+
   if (this.view) {
     this.currentItemIndex = 0;
     this.view.close();
@@ -148,7 +172,6 @@ PreviewGalleryController.prototype.deleteCurrentItem = function() {
 /**
  * Update the preview with the latest recent item
  * after deleting images/videos.
- * If needed, update thumbnail also.
  *
  * @param  {String} index
  */
@@ -158,17 +181,11 @@ PreviewGalleryController.prototype.updatePreviewGallery = function(index) {
 
     // If there are no more items, go back to the camera
   if (this.items.length === 0) {
-    this.app.emit('removeThumbnail');
     this.closePreview();
   }
   else {
     if (index == this.items.length) {
       this.currentItemIndex = this.items.length - 1;
-    }
-    else if (index === 0) {
-      // Update thumbnail icon when delete the latest image
-      var newItem = this.items[this.currentItemIndex];
-      this.app.emit('changeThumbnail', newItem);
     }
 
     var isPreviewOpened = this.view.isPreviewOpened();
@@ -208,7 +225,13 @@ PreviewGalleryController.prototype.previous = function() {
 };
 
 PreviewGalleryController.prototype.onNewMedia = function(item) {
+  // If we're handling a pick activity the preview gallery is not used
+  if (this.app.activity.active) {
+    return;
+  }
+
   this.items.unshift(item);
+  this.updateThumbnail();
 };
 
 PreviewGalleryController.prototype.previewItem = function() {
@@ -263,6 +286,46 @@ PreviewGalleryController.prototype.onBlur = function() {
   if (this.app.inSecureMode) {
     this.closePreview();
     this.configure();
+  }
+};
+
+PreviewGalleryController.prototype.updateThumbnail = function() {
+  var self = this;
+  var media = this.thumbnailItem = this.items[0] || null;
+
+  if (media === null) {
+    this.app.emit('newthumbnail', null);
+    return;
+  }
+
+  if (media.isVideo) {
+    // If it is a video we can create a thumbnail from the poster image
+    createThumbnailImage(media.poster.blob, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT,
+                         media.rotation, media.mirrored, gotThumbnail);
+  } else {
+    // If it is a photo we want to use the EXIF preview rather than
+    // decoding the whole image if we can, so look for a preview first.
+    parseJPEGMetadata(media.blob, onJPEGParsed);
+  }
+
+  function onJPEGParsed(metadata) {
+    var blob;
+
+    if (metadata.preview) {
+      // If JPEG contains a preview we use it to create the thumbnail
+      blob = media.blob.slice(metadata.preview.start, metadata.preview.end,
+                              'image/jpeg');
+    } else {
+      // Otherwise, use the full-size image
+      blob = media.blob;
+    }
+
+    createThumbnailImage(blob, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT,
+                         metadata.rotation, metadata.mirrored, gotThumbnail);
+  }
+
+  function gotThumbnail(blob) {
+    self.app.emit('newthumbnail', blob);
   }
 };
 

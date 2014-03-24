@@ -7,8 +7,6 @@ define(function(require, exports, module) {
 
 var debug = require('debug')('controller:camera');
 var bindAll = require('lib/bind-all');
-var parseJPEGMetadata = require('jpegMetaDataParser');
-var createThumbnailImage = require('lib/create-thumbnail-image');
 
 /**
  * Exports
@@ -36,11 +34,6 @@ function CameraController(app) {
   this.hdrDisabled = this.settings.hdr.get('disabled');
   this.configure();
   this.bindEvents();
-  /**
-    Default Thumbnail sizes in css pixels
-  */
-  this.thumbnailWidth = 54;
-  this.thumbnailHeight = 54;
   debug('initialized');
 }
 
@@ -188,18 +181,7 @@ CameraController.prototype.onNewImage = function(image) {
     image.filepath = filepath;
 
     debug('new image', image);
-
-    if (!self.activity.active) {
-      self.createThumbnail(image, function onThumbnailCreated(thumbnailBlob) {
-        image.thumbnail = thumbnailBlob;
-        self.app.emit('newmedia', image);
-      });
-    }
-    else {
-      // If there is an activity, we don't need to display a thumbnail
-      // so don't bother creating one
-      self.app.emit('newmedia', image);
-    }
+    self.app.emit('newmedia', image);
   });
 };
 
@@ -234,17 +216,8 @@ CameraController.prototype.onNewVideo = function(video) {
       // Note that "video" references "poster", so video previews will use this
       // File.
       poster.blob = fileBlob;
-      if (!self.activity.active) {
-        self.createThumbnail(video, function onThumbnailCreated(thumbnailBlob) {
-          video.thumbnail = thumbnailBlob;
-          self.app.emit('newmedia', video);
-        });
-      }
-      else {
-        // If we're handling a pick activity we will never display a
-        // thumbnail, so we don't bother creating one here.
-        self.app.emit('newmedia', video);
-      }
+      debug('new video', video);
+      self.app.emit('newmedia', video);
     });
 };
 
@@ -342,44 +315,6 @@ CameraController.prototype.onHDRChange = function(hdr) {
   var ishdrOn = hdr === 'on';
   if (ishdrOn && flashMode !== 'off') {
     this.settings.flashModesPicture.select('off');
-  }
-};
-
-CameraController.prototype.createThumbnail = function(media,
-                                                      onThumbnailCreated) {
-  var thumbnailWidth = this.thumbnailWidth * window.devicePixelRatio;
-  var thumbnailHeight = this.thumbnailHeight * window.devicePixelRatio;
-
-  if (media.isVideo) {
-    createThumbnailImage(
-      media.poster.blob,
-      thumbnailWidth,
-      thumbnailHeight,
-      media.isVideo,
-      media.rotation,
-      media.mirrored,
-      onThumbnailCreated);
-  } else {
-    parseJPEGMetadata(media.blob, onJPEGParsed);
-  }
-
-  function onJPEGParsed(metadata) {
-    var blob = media.blob;
-    // If JPEG contains a preview we use it to create the thumbnail
-    if (metadata.preview) {
-      blob = blob.slice(
-        metadata.preview.start,
-        metadata.preview.end,
-        'image/jpeg');
-    }
-    createThumbnailImage(
-      blob,
-      thumbnailWidth,
-      thumbnailHeight,
-      false,
-      metadata.rotation,
-      metadata.mirrored,
-      onThumbnailCreated);
   }
 };
 

@@ -76,9 +76,11 @@ module.exports = View.extend({
   },
 
   removeThumbnail: function() {
-    this.els.thumbnail.removeChild(this.els.image);
-    window.URL.revokeObjectURL(this.els.image.src);
-    this.els.image = null;
+    if (this.els.image) {
+      this.els.thumbnail.removeChild(this.els.image);
+      window.URL.revokeObjectURL(this.els.image.src);
+      this.els.image = null;
+    }
 
     this.set('gallery', true);
     this.set('thumbnail', false);

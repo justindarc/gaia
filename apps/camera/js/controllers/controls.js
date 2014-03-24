@@ -33,9 +33,7 @@ function ControlsController(app) {
 
 ControlsController.prototype.bindEvents = function() {
   this.app.settings.on('change:mode', this.controls.setter('mode'));
-  this.app.on('newmedia', this.onNewThumbnail);
-  this.app.on('changeThumbnail', this.onNewThumbnail);
-  this.app.on('removeThumbnail', this.onRemoveThumbnail);
+  this.app.on('newthumbnail', this.onNewThumbnail);
   this.app.on('camera:ready', this.controls.enable);
   this.app.on('camera:busy', this.controls.disable);
   this.app.on('change:recording', this.controls.setter('recording'));
@@ -72,14 +70,18 @@ ControlsController.prototype.configure = function() {
 };
 
 /**
-  When new thumbnail is available it is displated in the gallery button
-*/
-ControlsController.prototype.onNewThumbnail = function(mediaBlob) {
-  this.controls.setThumbnail(mediaBlob.thumbnail);
-};
-
-ControlsController.prototype.onRemoveThumbnail = function(mediaBlob) {
-  this.controls.removeThumbnail();
+ * When the thumbnail changes, update it in the view.
+ * This method is triggered by the 'newthumbnail' event.
+ * That event is emitted by the preview gallery controller when the a new
+ * photo or video is added, or when the preview is closed and the first
+ * photo or video has changed (because of a file deletion).
+ */
+ControlsController.prototype.onNewThumbnail = function(thumbnailBlob) {
+  if (thumbnailBlob) {
+    this.controls.setThumbnail(thumbnailBlob);
+  } else {
+    this.controls.removeThumbnail();
+  }
 };
 
 ControlsController.prototype.onTimerStarted = function(image) {
