@@ -15,7 +15,8 @@ mocha.setup({
     'debug',
     'CONFIG_AVG_JPEG_COMPRESSION_RATIO',
     'MediaFrame',
-    'confirm'
+    'confirm',
+    'MozActivity'
   ]
 });
 

@@ -33,7 +33,6 @@ suite('controllers/preview-gallery', function() {
     this.app.camera = sinon.createStubInstance(this.Camera);
     this.app.settings = sinon.createStubInstance(this.Settings);
     this.app.views = {
-      previewGallery: sinon.createStubInstance(this.PreviewGalleryView),
       controls: sinon.createStubInstance(this.ControlsView)
     };
     this.app.storage = sinon.createStubInstance(this.Storage);
@@ -44,13 +43,13 @@ suite('controllers/preview-gallery', function() {
     this.app.storage.video.delete.withArgs('root/fileName').returns({});
     this.app.settings = sinon.createStubInstance(this.Settings);
 
-    // For convenience
-    this.camera = this.app.camera;
-    this.previewGallery = this.app.views.previewGallery;
-    this.storage = this.app.storage;
-
     // Our test instance
     this.previewGalleryController = new this.PreviewGalleryController(this.app);
+
+    // For convenience
+    this.camera = this.app.camera;
+    this.previewGallery = this.previewGalleryController.view;
+    this.storage = this.app.storage;
   });
 
   suite('PreviewGalleryController()', function() {
@@ -59,8 +58,15 @@ suite('controllers/preview-gallery', function() {
       if (!navigator.mozL10n) { navigator.mozL10n = mozL10n; }
       sinon.stub(window, 'confirm');
       window.confirm.returns(true);
+      window.MozActivity = function() {};
       sinon.stub(window, 'MozActivity');
       sinon.stub(navigator.mozL10n, 'get');
+
+      this.previewGalleryController.storage = {
+        deleteImage: sinon.spy(),
+        deleteVideo: sinon.spy(),
+        on: sinon.spy()
+      };
     });
 
     teardown(function() {
@@ -71,16 +77,10 @@ suite('controllers/preview-gallery', function() {
 
     test('Should listen to the following events', function() {
       this.previewGalleryController.bindEvents();
+
       assert.ok(this.app.on.calledWith('preview'));
       assert.ok(this.app.on.calledWith('newmedia'));
       assert.ok(this.app.on.calledWith('blur'));
-
-      assert.ok(this.previewGallery.on.calledWith('click:gallery'));
-      assert.ok(this.previewGallery.on.calledWith('click:share'));
-      assert.ok(this.previewGallery.on.calledWith('click:delete'));
-      assert.ok(this.previewGallery.on.calledWith('click:back'));
-      assert.ok(this.previewGallery.on.calledWith('itemChange'));
-
       assert.ok(this.storage.on.calledWith('itemdeleted'));
     });
 
@@ -137,14 +137,13 @@ suite('controllers/preview-gallery', function() {
       var item = {
         blob: {},
         filepath: 'root/fileName',
-        isImage: true
+        isVideo: false
       };
       this.previewGalleryController.items = [item];
       this.previewGalleryController.currentItemIndex = 0;
-      this.previewGalleryController.deleteItem = sinon.spy();
       this.previewGalleryController.deleteCurrentItem();
 
-      assert.ok(this.previewGalleryController.deleteItem
+      assert.ok(this.previewGalleryController.storage.deleteImage
                 .calledWith('root/fileName'));
     });
 
@@ -152,38 +151,54 @@ suite('controllers/preview-gallery', function() {
       var item = {
         blob: {},
         filepath: 'root/fileName',
-        isImage: false
+        isVideo: true
       };
       this.previewGalleryController.items = [item];
       this.previewGalleryController.currentItemIndex = 0;
-
-      this.previewGalleryController.deleteItem = sinon.spy();
       this.previewGalleryController.deleteCurrentItem();
 
-      assert.ok(this.previewGalleryController.deleteItem
+      assert.ok(this.previewGalleryController.storage.deleteVideo
                 .calledWith('root/fileName'));
     });
 
     test('Check onNewMedia callback', function() {
       var item = {
-         media: {
-           blob: {},
-           type: 'video/mpeg'
-         }
+        blob: {},
+        filepath: 'root/fileName',
+        isVideo: false
+      };
+
+      this.app.activity = {
+        active: false
       };
 
       this.previewGalleryController.items.unshift = sinon.spy();
+      this.previewGalleryController.updateThumbnail = sinon.spy();
       this.previewGalleryController.onNewMedia(item);
       assert.ok(this.previewGalleryController.items.unshift.called);
+      assert.ok(this.previewGalleryController.updateThumbnail.called);
     });
 
     test('Should Check the Item Deleted', function() {
-      var data = {
-        path: 'home/DCIM/abc.jpg'
+      var item = {
+        blob: {},
+        filepath: 'root/fileName',
+        isVideo: false
       };
-      this.previewGalleryController.deleteItem = sinon.spy();
+
+      var data = {
+        path: 'root/fileName'
+      };
+
+      this.app.activity = {
+        active: false
+      };
+
+      this.previewGalleryController.updateThumbnail = sinon.spy();
+      this.previewGalleryController.updatePreviewGallery = sinon.spy();
+      this.previewGalleryController.onNewMedia(item);
       this.previewGalleryController.onItemDeleted(data);
-      assert.ok(this.previewGalleryController.deleteItem.called);
+      assert.ok(this.previewGalleryController.updatePreviewGallery.called);
     });
 
     test('Should go to next image when onItemChange is \'left\'', function() {
