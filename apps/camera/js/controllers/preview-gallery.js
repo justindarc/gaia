@@ -8,7 +8,6 @@ define(function(require, exports, module) {
 var debug = require('debug')('controller:preview-gallery');
 var bindAll = require('lib/bind-all');
 var PreviewGalleryView = require('views/preview-gallery');
-var parseJPEGMetadata = require('jpegMetaDataParser');
 var createThumbnailImage = require('lib/create-thumbnail-image');
 var preparePreview = require('lib/prepare-preview-blob');
 
@@ -326,16 +325,11 @@ PreviewGalleryController.prototype.updateThumbnail = function() {
                          media.rotation, media.mirrored, gotThumbnail);
   } else {
     // If it is a photo we want to use the EXIF preview rather than
-    // decoding the whole image if we can, so look for a preview first.
-    parseJPEGMetadata(media.blob, onJPEGParsed);
-  }
-
-  function onJPEGParsed(metadata) {
+    // decoding the whole image if we can.
     var blob;
-
-    if (metadata.preview) {
+    if (media.preview) {
       // If JPEG contains a preview we use it to create the thumbnail
-      blob = media.blob.slice(metadata.preview.start, metadata.preview.end,
+      blob = media.blob.slice(media.preview.start, media.preview.end,
                               'image/jpeg');
     } else {
       // Otherwise, use the full-size image
@@ -343,7 +337,8 @@ PreviewGalleryController.prototype.updateThumbnail = function() {
     }
 
     createThumbnailImage(blob, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT,
-                         metadata.rotation, metadata.mirrored, gotThumbnail);
+                         media.rotation, media.mirrored, gotThumbnail);
+
   }
 
   function gotThumbnail(blob) {
