@@ -412,13 +412,23 @@ function VideoPlayer(container) {
     return position;
   }
 
+  var isSeeking = false;
+
+  player.addEventListener('seeking', function(evt) {
+    isSeeking = true;
+  });
+
+  player.addEventListener('seeked', function(evt) {
+    isSeeking = false;
+  });
+
   // handle drags on the time slider
   slider.addEventListener('pan', function pan(e) {
     e.stopPropagation();
-    // We can't do anything if we don't know our duration
-    if (player.duration === Infinity)
+    // We can't do anything if we don't know our duration or
+    // if we're already in the middle of a seek operation
+    if (player.duration === Infinity || isSeeking)
       return;
-
     if (!dragging) {  // Do this stuff on the first pan event only
       dragging = true;
       pausedBeforeDragging = player.paused;
