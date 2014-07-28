@@ -1,0 +1,37 @@
+<element name="wifip2p" extends="section">
+  <template>
+
+      <header>
+        <a href="#root"><span class="icon icon-back">back</span></a>
+        <h1 data-l10n-id="wifip2p"> Wi-Fi Direct </h1>
+      </header>
+
+      <div>
+      <ul>
+        <li id="wifip2p-enabled">
+          <label class="pack-switch">
+            <input type="checkbox" data-ignore />
+            <span data-l10n-id="wifiDirect">Wi-Fi Direct</span>
+          </label>
+        </li>
+        <li id="p2p-wps-column">
+          <small data-l10n-id="p2pWpsDescription2"></small>
+          <a data-l10n-id="p2pWpsMessage">Choose WPS method</a>
+        </li>
+        <li id="p2p-go-intent-column">
+          <small data-l10n-id="goIntent">1</small>
+          <a data-l10n-id="goIntentMessage">GO Intent</a>
+        </li>
+      </ul>
+
+      <header>
+        <h2 data-l10n-id="wifiP2pPeerList"> Wi-Fi Direct Peer List </h2>
+      </header>
+      <ul id="wifiP2pPeerList">
+      </ul>
+      </div>
+
+      <panel data-path="panels/wifip2p/panel"></panel>
+
+  </template>
+</element>

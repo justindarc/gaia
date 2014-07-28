@@ -1,0 +1,44 @@
+<element name="wifip2p-wps" extends="section">
+  <template>
+
+    <header>
+      <button type="reset"><span data-l10n-id="back" class="icon icon-back">Back</span></button>
+      <menu type="toolbar">
+        <button type="submit"><span data-l10n-id="ok">OK</span></button>
+      </menu>
+      <h1 data-l10n-id="p2pWpsMessage"> Choose WPS Method </h1>
+    </header>
+
+    <div>
+      <header>
+        <h2 data-l10n-id="wpsMethodSelection">Select WPS method:</h2>
+      </header>
+      <ul>
+        <li>
+          <label class="pack-radio">
+            <input type="radio" data-setting="wifip2p.wps.method" name="wpsMethodSelection" value="pbc" checked />
+            <span></span>
+          </label>
+          <a data-l10n-id="p2pWpsPbcLabel">Push button</a>
+        </li>
+        <li>
+          <label class="pack-radio">
+            <input type="radio" data-setting="wifip2p.wps.method" name="wpsMethodSelection" value="keypad" />
+            <span></span>
+          </label>
+          <a data-l10n-id="p2pWpsKeypadLabel">Keypad</a>
+        </li>
+        <li>
+          <label class="pack-radio">
+            <input type="radio" data-setting="wifip2p.wps.method" name="wpsMethodSelection" value="display" />
+            <span></span>
+          </label>
+          <a data-l10n-id="p2pWpsDisplayLabel">Display</a>
+        </li>
+      </ul>
+    </div>
+
+    <panel data-path="panels/wifip2p_wps/panel"></panel>
+
+  </template>
+</element>
