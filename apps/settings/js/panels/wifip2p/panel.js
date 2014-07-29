@@ -8,10 +8,23 @@ define(function(require) {
   var localize = navigator.mozL10n.localize;
 
   var gWifiP2pManager = navigator.mozWifiP2pManager;
+  var gWifiP2pPeerList;
 
   var gWpsMethod = "pbc";
   var gGoIntent = 1;
   var DEVICE_NAME = "I am Mozillian!";
+
+  if (!gWifiP2pManager) {
+    var nop = function() {};
+    gWifiP2pManager = {
+      addEventListener: nop,
+      setScanEnabled: nop,
+      connect: nop,
+      disconnect: nop,
+      getPeerList: nop,
+      setPairingConfirmation: nop,
+    };
+  }
 
   return function ctor_wifip2p() {
     var elements;
@@ -65,6 +78,7 @@ define(function(require) {
     // DOM handlers
     //
     function onToggleEnabled(event) {
+      debug('onToggleEnabled....');
       gWifiP2pManager.setScanEnabled(true);
     }
 
@@ -79,6 +93,7 @@ define(function(require) {
     }
 
     function onWpsColumnClick(event) {
+      debug('onWpsColumnClick...........');
       SettingsUtils.openDialog('wifip2p-wps', {
         onSubmit: function() {
           gWpsMethod = wifiP2pContext.wpsOptions.selectedMethod;
