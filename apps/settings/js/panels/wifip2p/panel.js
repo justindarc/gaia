@@ -3,9 +3,6 @@ define(function(require) {
 
   var SettingsUtils = require('modules/settings_utils');
   var SettingsPanel = require('modules/settings_panel');
-  var WifiWps = require('panels/wifi/wifi_wps');
-  var WifiContext = require('modules/wifi_context');
-  var WifiHelper = require('shared/wifi_helper');
 
   var _ = navigator.mozL10n.get;
   var localize = navigator.mozL10n.localize;
@@ -27,19 +24,18 @@ define(function(require) {
       onInit: function(panel) {
         if (!gWifiP2pManager) {
           debug("WifiP2pManager doesn't exist!");
-          return;
+          //return;
         }
 
         elements = {
           panel: panel,
           wifi: panel,
-          toggleCheckbox: panel.querySelector('#wifip2p-enabled input'),
+          toggleEnabledCheckbox: panel.querySelector('#wifip2p-enabled input'),
           goIntentBlock: panel.querySelector('#p2p-go-intent-column small'),
           goIntentColumn: panel.querySelector('#p2p-go-intent-column'),
           wpsColumn: panel.querySelector('#p2p-wps-column'),
           wpsInfoBlock: panel.querySelector('#p2p-wps-column small'),
           peerList: panel.querySelector('#wifiP2pPeerList'),
-          wpsDialog: panel.querySelector('#wifip2p-wps'),
         };
 
         // element related events
@@ -52,6 +48,8 @@ define(function(require) {
         gWifiP2pManager.addEventListener('enabled', onEnabled);
         gWifiP2pManager.addEventListener('disabled', onDisabled);
         gWifiP2pManager.addEventListener('peerinfoupdate', onPeerInfoUpdate);
+
+        gWifiP2pPeerList = WifiP2pPeerList(elements.panel.querySelector('#wifiP2pPeerList'));
 
         //
         // Initial actions.
@@ -83,9 +81,7 @@ define(function(require) {
     function onWpsColumnClick(event) {
       SettingsUtils.openDialog('wifip2p-wps', {
         onSubmit: function() {
-          var dialog = elements.wpsDialog;
-          var checked = dialog.querySelector("input[type='radio']:checked").value;
-          gWpsMethod = checked;
+          gWpsMethod = wifiP2pContext.wpsOptions.selectedMethod;
           updateWpsMethod();
         },
       });
@@ -176,6 +172,79 @@ define(function(require) {
             break;
         }
       });
+    }
+
+    //
+    // Ctor of WifiP2pPeerList.
+    //
+    function WifiP2pPeerList(aList) {
+      // clear the network list
+      function clear() {
+        // remove all items except the text expl. and the "search again" button
+        var peerItems = aList.querySelectorAll('li:not([data-state])');
+        var len = peerItems.length;
+        for (var i = len - 1; i >= 0; i--) {
+          aList.removeChild(peerItems[i]);
+        }
+      }
+
+      function onPeerClicked(aPeerInfo) {
+        if (aPeerInfo.connectionStatus === "connected") {
+          debug('Peer is connected. Disconnect it!');
+          gWifiP2pManager.disconnect(aPeerInfo.address);
+        } else {
+          debug('Peer is diconnected. Connect it!');
+          debug('aPeerInfo.wpsCapabilities: ' + aPeerInfo.wpsCapabilities);
+          if (-1 === aPeerInfo.wpsCapabilities.indexOf(gWpsMethod)) {
+            debug("Peer doesn't support the wps method we prefer: " + gWpsMethod);
+            return;
+          }
+          gWifiP2pManager.connect(aPeerInfo.address, gWpsMethod, gGoIntent);
+        }
+      }
+
+      function setPeerList(aPeerList) {
+        clear();
+        debug("PeerList to set: " + JSON.stringify(aPeerList));
+        for (var i = 0; i < aPeerList.length; i++) {
+          var listItem = newPeerListItem(aPeerList[i], onPeerClicked);
+          aList.appendChild(listItem);
+        }
+      }
+
+      function newPeerListItem(aPeerInfo, aCallback) {
+        /**
+         * A Wi-Fi list item has the following HTML structure:
+         *   <li>
+         *     <small> Network Security </small>
+         *     <a [class="wifi-secure"]> Network SSID </a>
+         *   </li>
+         */
+
+        var name = document.createElement('a');
+        name.textContent = aPeerInfo.name;
+
+        var connectionStatus = document.createElement('small');
+        connectionStatus.textContent = aPeerInfo.connectionStatus;
+
+        // create list item
+        var li = document.createElement('li');
+        li.appendChild(connectionStatus);
+        li.appendChild(name);
+
+        // bind connection callback
+        li.onclick = function() {
+          aCallback(aPeerInfo);
+        };
+
+        return li;
+      }
+
+      // API
+      return {
+        clear: clear,
+        setPeerList: setPeerList
+      };
     }
 
     return panel;

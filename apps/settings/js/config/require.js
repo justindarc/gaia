@@ -171,6 +171,14 @@ require.config({
     {
       name: 'panels/wifi_wps/panel',
       exclude: ['main']
-    }
+    },
+    {
+      name: 'panels/wifip2p/panel',
+      exclude: ['main']
+    },
+    {
+      name: 'panels/wifip2p_wps/panel',
+      exclude: ['main']
+    },
   ]
 });

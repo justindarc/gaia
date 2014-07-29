@@ -158,34 +158,6 @@ navigator.mozL10n.ready(function wifiDirectSettings() {
     wpsDialog('wifip2p-wps', wpsCallback);
   };
 
-  function newPeerListItem(aPeerInfo, aCallback) {
-    /**
-     * A Wi-Fi list item has the following HTML structure:
-     *   <li>
-     *     <small> Network Security </small>
-     *     <a [class="wifi-secure"]> Network SSID </a>
-     *   </li>
-     */
-
-    var name = document.createElement('a');
-    name.textContent = aPeerInfo.name;
-
-    var connectionStatus = document.createElement('small');
-    connectionStatus.textContent = aPeerInfo.connectionStatus;
-
-    // create list item
-    var li = document.createElement('li');
-    li.appendChild(connectionStatus);
-    li.appendChild(name);
-
-    // bind connection callback
-    li.onclick = function() {
-      aCallback(aPeerInfo);
-    };
-
-    return li;
-  }
-
   var gWifiP2pPeerList = (function wifiP2pPeerList(aList) {
     // clear the network list
     function clear() {
