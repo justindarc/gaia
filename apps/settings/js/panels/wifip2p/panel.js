@@ -158,6 +158,8 @@ define(function(require) {
 
     function setPairingRequestHandler() {
       navigator.mozSetMessageHandler('wifip2p-pairing-request', function(evt) {
+        debug(JSON.stringify(evt));
+
         var accepted = true;
 
         function setPairingConfirm(aAccepted, aPin) {
