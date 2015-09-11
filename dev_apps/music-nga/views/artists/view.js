@@ -11,6 +11,7 @@ var ArtistsView = View.extend(function ArtistsView() {
 
   var searchHeight = this.search.offsetHeight;
 
+  this.search.addEventListener('search', (evt) => this.search(evt.detail));
   this.search.addEventListener('open', () => window.parent.onSearchOpen());
   this.search.addEventListener('close', () => {
     this.list.scrollTop = searchHeight;
@@ -53,6 +54,14 @@ ArtistsView.prototype.render = function() {
 
 ArtistsView.prototype.getArtists = function() {
   return this.fetch('/api/artists/list').then(response => response.json());
+};
+
+ArtistsView.prototype.search = function(query) {
+  return this.fetch('/api/search/artist/' + query).then((response) => {
+    return response.json();
+  }).then((results) => {
+    this.search.setResults(results);
+  });
 };
 
 window.view = new ArtistsView();

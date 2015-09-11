@@ -11,6 +11,7 @@ var AlbumsView = View.extend(function AlbumsView() {
 
   var searchHeight = this.search.offsetHeight;
 
+  this.search.addEventListener('search', (evt) => this.search(evt.detail));
   this.search.addEventListener('open', () => window.parent.onSearchOpen());
   this.search.addEventListener('close', () => {
     this.list.scrollTop = searchHeight;
@@ -55,6 +56,14 @@ AlbumsView.prototype.getAlbums = function() {
   return this.fetch('/api/albums/list')
     .then(response => response.json())
     .then(albums => clean(albums));
+};
+
+AlbumsView.prototype.search = function(query) {
+  return this.fetch('/api/search/album/' + query).then((response) => {
+    return response.json();
+  }).then((results) => {
+    this.search.setResults(results);
+  });
 };
 
 function clean(items) {

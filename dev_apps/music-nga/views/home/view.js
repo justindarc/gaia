@@ -9,6 +9,7 @@ var HomeView = View.extend(function HomeView() {
   this.search = document.getElementById('search');
   this.tiles = document.getElementById('tiles');
 
+  this.search.addEventListener('search', (evt) => this.search(evt.detail));
   this.search.addEventListener('open', () => window.parent.onSearchOpen());
   this.search.addEventListener('close', () => window.parent.onSearchClose());
 
@@ -78,6 +79,15 @@ HomeView.prototype.getSongThumbnail = function(filePath) {
 
 HomeView.prototype.queueAlbum = function(filePath) {
   this.fetch('/api/queue/album/' + filePath);
+};
+
+HomeView.prototype.search = function(query) {
+  // XXX: Search all fields
+  return this.fetch('/api/search/title/' + query).then((response) => {
+    return response.json();
+  }).then((results) => {
+    this.search.setResults(results);
+  });
 };
 
 window.view = new HomeView();

@@ -11,6 +11,7 @@ var SongsView = View.extend(function SongsView() {
 
   var searchHeight = this.search.offsetHeight;
 
+  this.search.addEventListener('search', (evt) => this.search(evt.detail));
   this.search.addEventListener('open', () => window.parent.onSearchOpen());
   this.search.addEventListener('close', () => {
     this.list.scrollTop = searchHeight;
@@ -83,6 +84,14 @@ SongsView.prototype.setCache = function(items) {
 
 SongsView.prototype.getCache = function() {
   return JSON.parse(localStorage.getItem('cache:songs')) || [];
+};
+
+SongsView.prototype.search = function(query) {
+  return this.fetch('/api/search/title/' + query).then((response) => {
+    return response.json();
+  }).then((results) => {
+    this.search.setResults(results);
+  });
 };
 
 window.view = new SongsView();
