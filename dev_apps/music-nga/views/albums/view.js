@@ -6,16 +6,22 @@ var debug = 1 ? (...args) => console.log('[AlbumsView]', ...args) : () => {};
 var AlbumsView = View.extend(function AlbumsView() {
   View.call(this); // super();
 
-  this.search = document.getElementById('search');
+  this.searchBox = document.getElementById('search');
   this.list = document.getElementById('list');
 
-  var searchHeight = this.search.offsetHeight;
+  var searchHeight = this.searchBox.offsetHeight;
 
-  this.search.addEventListener('search', (evt) => this.search(evt.detail));
-  this.search.addEventListener('open', () => window.parent.onSearchOpen());
-  this.search.addEventListener('close', () => {
+  this.searchBox.addEventListener('search', (evt) => this.search(evt.detail));
+  this.searchBox.addEventListener('open', () => window.parent.onSearchOpen());
+  this.searchBox.addEventListener('close', () => {
     this.list.scrollTop = searchHeight;
     window.parent.onSearchClose();
+  });
+  this.searchBox.addEventListener('resultclick', (evt) => {
+    var link = evt.detail;
+    if (link) {
+      this.client.method('navigate', link.getAttribute('href'));
+    }
   });
 
   this.list.scrollTop = searchHeight;
@@ -59,10 +65,26 @@ AlbumsView.prototype.getAlbums = function() {
 };
 
 AlbumsView.prototype.search = function(query) {
-  return this.fetch('/api/search/album/' + query).then((response) => {
-    return response.json();
-  }).then((results) => {
-    this.search.setResults(results);
+  return Promise.all([
+    document.l10n.formatValue('unknownAlbum'),
+    document.l10n.formatValue('unknownArtist')
+  ]).then(([unknownAlbum, unknownArtist]) => {
+    return this.fetch('/api/search/album/' + query)
+      .then(response => response.json())
+      .then((albums) => {
+        var results = albums.map((album) => {
+          return {
+            name:     album.name,
+            title:    album.metadata.album  || unknownAlbum,
+            subtitle: album.metadata.artist || unknownArtist,
+            section:  'albums',
+            url:      '/album-detail?id=' + album.name
+          };
+        });
+
+        this.searchBox.setResults(results);
+        return results;
+      });
   });
 };
 
