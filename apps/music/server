@@ -1,0 +1,83 @@
+#!/usr/bin/env node
+const HTTP_PORT = 3030;
+
+const ROOT_PATHS = [
+  '.',
+  '../../'
+];
+
+const MIME_TYPES = {
+  'html'   : 'text/html',
+  'js'     : 'text/javascript',
+  'css'    : 'text/css',
+  'png'    : 'image/png',
+  'jpg'    : 'image/jpg',
+  'ttf'    : 'application/x-font-truetype',
+  'webapp' : 'application/x-web-app-manifest+json'
+};
+
+var fs   = require('fs');
+var http = require('http');
+var path = require('path');
+
+var server = http.createServer(function(request, response) {
+  var filePath;
+
+  for (var i = 0; i < ROOT_PATHS.length; i++) {
+    filePath = ROOT_PATHS[i] + decodeURIComponent(request.url);
+
+    if (filePath.endsWith('/')) {
+      filePath += 'index.html';
+    }
+
+    if (request.url === '/js/metadata/metadata_scripts.js') {
+      response.writeHead(200, { 'Content-Type': MIME_TYPES['js'] });
+      response.end(getMetadataScripts());
+      return;
+    }
+
+    if (fs.existsSync(filePath)) {
+      fs.readFile(filePath, function(error, content) {
+        if (error) {
+          if (error.code === 'ENOENT') {
+            response.writeHead(404);
+            response.end();
+          }
+
+          else {
+            response.writeHead(500);
+            response.end();
+          }
+
+          return;
+        }
+
+        var contentType = MIME_TYPES[path.extname(filePath).substring(1)] ||
+                          'application/octet-stream';
+
+        response.writeHead(200, { 'Content-Type': contentType });
+        response.end(content);
+      });
+
+      return;
+    }
+  }
+});
+
+server.listen(HTTP_PORT, function() {
+  console.log('Listening at http://localhost:' + HTTP_PORT + '/');
+});
+
+function getMetadataScripts() {
+  var output = '';
+
+  output += fs.readFileSync('../../shared/js/blobview.js');
+  output += fs.readFileSync('./js/metadata/formats.js');
+  output += fs.readFileSync('./js/metadata/core.js');
+
+  return output;
+}
+
+String.prototype.endsWith = function(searchString) {
+  return this.indexOf(searchString, this.length - searchString.length) !== -1;
+};
