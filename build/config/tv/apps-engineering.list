@@ -17,6 +17,7 @@ tv_apps/fling-tutorial
 tv_apps/tv-ftu
 apps/sync
 apps/keyboard
+apps/music
 outoftree_apps/*
 dev_apps/test-agent
 dev_apps/uitest
